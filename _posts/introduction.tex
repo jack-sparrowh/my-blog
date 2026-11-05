@@ -1,0 +1,265 @@
+\documentclass[10pt, letterpaper]{article}
+\title{Introduction to Calculations of Heat loss on piping}
+\author{Przemyslaw Wiecek}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\begin{document}
+\maketitle
+
+    \section{Introduction}
+    This excel sheet allows to calculate heat losses for a single pipe with flowing liquid.
+    It utilizes a Python module available in Excel environment. The exact usage of this packet is described in the sheet "User's Guide". There are three modes of calculations:
+
+	\begin{itemize}
+		\item Standard - convective and radiative heat transfer
+		\item External Heat Flux - applicable only if external flux is present
+		\item Heat Tracing - tracing is utilized under insulation layer
+	\end{itemize}
+
+	\noindent Those methods are described in more details in the next seciton.
+
+    \section{Theory behind calculations}
+	All modes are utilizing the same energy balance and methodology. There are special additional considerations when it comes down to heat flux and heat tracing modes, which are later explained.
+    Here are main assumptions that allows us to solve mass and energy balance:
+
+	\begin{enumerate}
+		\item Steady-state process.
+		\item The change in kinetic and potential energy is negligible.
+		\item The flow is turbulent and pipes are full of liquid.
+		\item The fluid is incompressible.
+		\item The specific heat capacity is constant.
+		\item Fluid is loosing energy to surroundings.
+		\item No axial heat transfer.
+		\item Uniform heat transfer distribution in piping cross section.
+		\item Piping is horizontal and enclosed by surface at ambient temperature separated by air only at ambient pressure and temperature.
+		\item Internal fluid heat transfer coeff. is insignificant and material conductivities are constant.
+		\item Absorptivity is equal to unit (heat flux mode).
+		\item Tracing is at the piping-insulaiton interface (heat tracing mode).
+	\end{enumerate}
+
+	With above in mind, one can utilize Thermal Resistance Network methodology and write that heat transfer in each layer of piping is equal to:
+
+	\begin{equation}
+		\dot{Q}_{ij} = \frac{\Delta{T_{ij}}}{R_{ij}}
+		\label{eq:thermal resistance definition}
+	\end{equation}
+
+	where, index $ij$ indicates the layering we calculate heat transfer through.
+	Because, the place at which we apply heat flux (external vs. internal) is different in each calculation mode, the general heat balance can be written as:
+
+	\begin{equation}
+		A_{y} \dot{q}'' - \frac{\Delta{T_{sa}}}{R_{sa}} = \dot{m} C dT_{f}
+		\label{eq:general energy balance}
+	\end{equation}
+
+	\noindent where:
+	\begin{itemize}
+		\item $T_{f}$ - temperature of liquid at distance,
+		\item $\Delta{T_{sa}}$ - difference between surface temperature $T_{s}$ and ambient temperature $T_{a}$,
+		\item $R_{sa}$ - thermal resistance of air around piping,
+		\item $A_{y}$ - area at which heat flux is applied, either outer piping area $A_{o}$ or total piping area $A_{t}$,
+		\item $\dot{q}''$ - heat flux applied at $A_{y}$,
+		\item $\dot{\text{m}}$ - mass flow rate,
+		\item $\text{C}$ - specific heat capacity,
+	\end{itemize}
+
+    \noindent and we define total thermal resistance of piping and insulation $R_{fa}$ as:
+    \begin{equation}
+        R_{fa} = R_{fi} + R_{is} + R_{sa} =
+		\frac{1}{2 \pi L}
+		\left(
+		\frac{1}{k_{pipe}} \text{ln} \left ( \frac{D_{o}}{D_{i}} \right ) + 
+        \frac{1}{k_{ins}} \text{ln} \left ( \frac{D_{t}}{D_{o}} \right ) +
+        \frac{2}{h D_{t}}
+		\right)
+		\label{eq:K_definition}
+    \end{equation}
+
+    \noindent where:
+    \begin{itemize}
+		\item $R_{fi}$ - thermal resistance of liquid film and piping wall,
+		\item $R_{is}$ - thermal resistance of insulation layer,
+		\item $L$ - piping of length $L$, for which thermal resistance is calculated,
+		\item $D_{i}$ - inner piping diameter,
+		\item $D_{o}$ - outer piping diameter,
+		\item $D_{t}$ - total diameter $D_{o} + 2 \cdot \text{ins.thickness}$,
+		\item $h$ - combined heat transfer coefficient from surface of a piping to air,
+		\item $k_{pipe}$ - thermal conductivity of a piping,
+		\item $k_{ins}$ - thermal conductivity of a insulation,
+    \end{itemize}
+
+	\subsection{General solution}
+
+	The presented approach does not calculate fluid temperature readily. Instead, surface temperature at $x=0$ length is found, then integration is carried out to find surface temperature profile with length, and finally it is translated back to fluid temperature.
+
+	Before presenting general solution, it is important to remember that $h$ is inherently a function of surface temperature $T_{s}$, which will be stated explicitly from now on. Let us also introduce few parameters that simplify the final form of solution:
+
+	$$
+	\begin{aligned}
+		\lambda = \frac{\dot{m} C}{\pi D_{t}},\ \ \ 
+		2 \pi L R_{fy} = \frac{1}{k_{pipe}} \text{ln} \left( \frac{D_{o}}{D_{i}} \right) +
+		\frac{1}{k_{ins}} \text{ln} \left( \frac{D_{y}}{D_{o}} \right),\ \ \
+		2 \pi L R_{ys} = \frac{1}{k_{ins}} \text{ln} \left( \frac{D_{t}}{D_{y}} \right)
+		\label{eq:shorts1}
+	\end{aligned}
+	$$
+
+	$$
+	\begin{aligned}
+		U_{fy} = \frac{1}{A_{t} R_{fy}},\ \ \
+		u_{ry} = 1 + \frac{R_{ys}}{R_{fy}}
+		\label{eq:shorts2}
+	\end{aligned}
+	$$
+
+	With properties above, it can be shown that, there exist a set of parametric curves which intersection satisfies energy balance (\ref{eq:general energy balance}):
+
+	\begin{equation}
+		U_{fy} \Delta{T_{fs}} + \frac{D_{y}}{D_{t}} \dot{q}'' - u_{ry} h(T_{s}) \Delta{T_{sa}} = 0
+		\label{eq:param_curve_1}
+	\end{equation}
+
+	\begin{equation}
+		\int_{T_{s,0}}^{T_{s}}
+		\left( 
+		h(T) \Delta{T} - \frac{D_{y}}{D_{t}} \dot{q}''
+		\right)^{-1}
+		\left( 
+		1 + u_{ry} \frac{h(T)}{U_{fy}} + u_{ry} \frac{\Delta{T}}{U_{fy}}
+		\frac{dh(T)}{dT}
+		\right)
+		dT
+		+ \frac{x}{\lambda} = 0
+		\label{eq:param_curve_2}
+	\end{equation}
+
+	\noindent where $\Delta{T} = T - T_{a}$. Because above integral does not have a closed form solution, it must be solved with different methods. 
+
+	The curve (\ref{eq:param_curve_2}) is solved with minimization algorithms. Before stating it mathematically, let us rewrite integrand as $\text{I}(T)$, then we can construct so-called loss function of form:
+
+	\begin{equation*}
+		\mathcal{L}(x, T_{s}) = \left( \int_{T_{s,0}}^{T_{s}} \text{I}(T) dT + \frac{x}{\lambda} \right)^{2}
+		\label{eq:loss_func_def}
+	\end{equation*}
+
+	And the final solution is found by minimizing this function at specially constructed interval $\text{Y}$ discussed in (\ref{sec:interval y}). Mathematically, the surface temperature at given length is found by solving:
+
+	\begin{equation}
+		T_{s}(x) = \underset{T \in \text{Y}}{\text{argmin}} \ \mathcal{L}(x, T)
+		\label{eq:T_s_solution}
+	\end{equation}
+
+	\noindent This value is then put back to (\ref{eq:param_curve_1}) to recover fluid temperature.
+
+	\subsection{Heat Transfer coefficient of piping surface}
+	Heat transfer coefficient of air film around piping surface is calculated as a sum of radiation and convection effects. This provides a straightforward way of calculating both effects separately. Radiation effect is calculated with Stefan-Boltzman law, whereas convection effect is calculated with Churchill and Chu correlation for horizontal piping in SI units. That is:
+
+    \begin{equation}
+    \begin{aligned}
+		h(T_{s}) &= h_{rad}(T_{s}) + h_{conv}(T_{s}) \\
+		h_{rad}(T_{s}) &= \epsilon \cdot 5.67 \cdot 10^{-8} \cdot
+		(T_{s}^{2} + T_{a}^{2}) \cdot
+		(T_{s} + T_{a}) \\
+		h_{conv}(T_{s}) &= 1389 \cdot \frac{\mu(T_{fl}) \cdot C_{p}(T_{fl})}{D_{t}} \left ( 0.6 + 0.321 \cdot \text{Ra}^{1/6} \right )^{2}
+		\label{eq:h_def}
+    \end{aligned}
+    \end{equation}
+
+    where the equation for convective heat transfer coefficient assumes $\text{Pr} = 0.72$ for all range of temperatures.
+    Here, $T_{fl}, \mu$ and $C_{p}$ are film temperature, dynamic viscosity and specific heat capacity of air at insulation-air interface, respectively, and $D_{t}$ is total diameter in inch of piping segment. All of below equations are defined for SI units only. Users can use both Imperial and SI for calculations, and internally the python module uses SI metric for equations (\ref{eq:film_temp}), (\ref{eq:dyn_visc}) and (\ref{eq:cp}).
+
+	Film temperature is just a mean value between surface temperature and ambient temperature:
+
+	\begin{equation}
+		T_{fl} = \frac{T_{s} + T_{a}}{2}
+		\left[ \text{K} \right]
+		\label{eq:film_temp}
+	\end{equation}
+
+	We calculate dynamic viscosity from Sutherland's law for air:
+
+	\begin{equation}
+	    \mu(T) = \frac{1.458 \cdot 10^{-6} \cdot T^{1.5}}{T + 110.4}
+		[\text{Pa} \cdot \text{s}]
+		\label{eq:dyn_visc}
+	\end{equation}
+
+	Polynomial relation for specific heat of air is taken from Cengel, Y. A., Boles, M. A., \& Kanoglu, M. (2015). "Thermodynamics: An engineering approach" (8th ed.):
+
+	\begin{equation}
+		C_{p}(T) = 0.9703 + 6.7898 \cdot 10^{-5} \cdot T + 1.6576 \cdot 10^{-7} \cdot T^{2} - 6.7863 \cdot 10^{-11} \cdot T^{3}
+		\left[\frac{\text{kJ}}{\text{kg} \cdot \text{K}} \right]
+		\label{eq:cp}
+	\end{equation}
+
+	Above equations (\ref{eq:dyn_visc}) and (\ref{eq:cp}) are valid in a range from around 200K to 1800K. There is no limit on upper or lower temperature in the spreadsheet, but below 273K specific heat of air is assumed to be equal to $C_{p}(273 \text{K})$ and above 1800K to be equal to $C_{p}(1800 \text{K})$.
+
+    In equation (\ref{eq:h_def}) $\text{Ra}$ is the Rayleigh number which for air at low reduced pressure (below 0.1) can be calculated from:
+
+    \begin{equation}
+        \text{Ra} = \frac{g \beta (T_{s} - T_{a}) D_{t}^{3}}{\nu \alpha} = 
+		880381 \cdot \frac{T_{s} - T_{a}}{T_{fl}^{3} \cdot \mu(T_{fl})^{2}} D_{t}^{3}
+		\label{eq:rayleigh}
+    \end{equation}
+
+	Here, $g$, $\beta$ and $\alpha$ is the gravitational acceleration, isobaric thermal expansion coefficient and thermal diffusitivty of air, repspectively. The exact equation above is obtained by assuming ambient pressure of 1 atm.
+
+	\subsection{Heat Transfer Rate Calculation}
+	There are three different values of heat transfer rate per segment length reported back to user. Those are:
+
+	\begin{itemize}
+		\item Heat Transfer Total ($\dot{q}_{loss}$) - This is total heat transfer that is being lost by the fluid. This means that if fluid temperature decreases this value is positive and if fluid temperature is increasing this value is negative. It is realated to fluid properties by $x_{t} \dot{q}_{loss} = -\dot{m} C \Delta{T_{f}}$.
+		\item Heat Transfer by Radiation/Convection ($\dot{q}_{rad/conv}$) - This is total heat transfer from the piping surface. Those values are positive if inlet fluid temperature is greater than ambient temperature, and negative if fluid temperature is less than ambient temperature.
+	\end{itemize}
+
+	While total heat transfer is easily related to known values, this is not the case for heat transfer by radiation and convection. The form of (\ref{eq:param_curve_2}) requires us to utilize thermal resistance equation (\ref{eq:thermal resistance definition}) at some weighted average surface temperature, instead of typical LMTD approach. Given energy balance of piping (\ref{eq:general energy balance}) it can be shown that:
+
+	\begin{equation}
+		\mathbf{\dot{q}} = \pi D_{t} \mathbf{h}(T_{s, avg}) \Delta{T_{sa, avg}}
+	\end{equation}
+
+	Where $\mathbf{\dot{q}} = (\dot{q}_{rad}, \dot{q}_{conv})$ and $\mathbf{h}(T_{s, avg}) = (h_{rad}(T_{s, avg}), h_{conv}(T_{s, avg}))$ and solution is obtained by the use of minimization algorithms similar to (\ref{eq:T_s_solution}) applied to energy balance. It is important to remember that sum of radiative and convective heat transfer rates will be equal to total heat transfer only and only if heat flux in any mode is zero.
+
+	\subsection{Minimization Interval $\text{Y}$}
+	\label{sec:interval y}
+
+	Under assumptions mentioned in chapter 2, there are three cases that can be considered when solving \ref{eq:param_curve_2}:
+
+	\begin{enumerate}
+		\item $\dot{q}''$ = 0
+		\item $0 < \dot{q}'' < \frac{D_{t}}{D_{y}} h(T_{s,0}) \Delta{T_{sa,0}}$
+		\item $\dot{q}'' > \frac{D_{t}}{D_{y}} h(T_{s,0}) \Delta{T_{sa,0}}$
+	\end{enumerate}
+
+	Here, (1) is easy to understand and $\text{Y}$ is simply the bound one would naturally choose:
+
+	\begin{equation}
+		\text{Y} = [T_{a}, T_{s,0}]
+	\end{equation}
+
+	In case of (2), the surface temperature is still decreasing with increasing length, but the lower bound is no longer ambient temperature due to incident heat flux:
+
+	\begin{equation}
+		\text{Y} = [T, T_{s,0}],\ \text{where}\ T\ \text{s.t.}\ h(T)(T-T_{a}) = \frac{D_{y}}{D_{t}} \dot{q}''
+	\end{equation}
+
+	In the last case (3), surface temperature increases with increasing length - fluid is heated by external heat flux. The lower bound is initial surface temperature, but upper bound is now different:
+
+	\begin{equation}
+		\text{Y} = [T_{s,0}, T],\ \text{where}\ T\ \text{s.t.}\ h(T)(T-T_{a}) = \frac{D_{y}}{D_{t}} \dot{q}''
+	\end{equation}
+	
+	It is important to note, that in case of fluid gaining heat from surroundings (inlet fluid temperature is lower than ambient temperature), there are only two cases to consider, either (1) or (3), bacause $\Delta{T_{sa,0}}$ will be negative or equal to 0, and Y will be (13) or (15).
+
+	%\section{Credits and References}
+	%Code creator: Przemyslaw Wiecek \\
+	%Python code utilized in this template is based on open-source project under GPL-3.0 license.
+	%Full license information is provided in the sheet "License". \\
+	%For more information, please visit: https://github.com/jack-sparrowh/Heat-Loss-on-Piping \\
+
+	%\noindent For any problems related to code or template, please contact me at: \\
+	%przemyslaw.wiecek@fluor.com
+
+\end{document}
